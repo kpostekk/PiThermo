@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block special-libs %}
+    <script src="{% static 'js/data_downloader.js' %}"></script>
+{% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-lg">
+            <h1>Temperatura</h1>
+            <p id="temp">Pobieranie danych...</p>
+        </div>
+        <div class="col-lg">
+            <h1>Grzejnik</h1>
+            <p>Stan grzejnika: <span id="state" class="badge">Pobieranie danych...</span></p>
+        </div>
+        <div class="col-lg">
+            <h1>Statystyki</h1>
+            <p>
+                Temp. wł. <span class="badge badge-info">{{ temps.low }} °C</span>
+                Temp. wył. <span class="badge badge-danger">{{ temps.high }} °C</span>
+            </p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg">
+            <h1>Logi</h1>
+            {% if logs|length == 0 %}
+                <p>Nie ma żadnych zapisów</p>
+            {% endif %}
+            <table class="table table-bordered table-striped">
+                <tbody>
+                {% for l in logs %}
+                    <tr>
+                        <th style="width: 35%">
+                            {{ l.timedate }}
+                        </th>
+                        <td style="width: 20%">
+                            {{ l.temp }}°C
+                        </td>
+                        <td class="text-lg-center">
+                            {% if l.action == '0' %}
+                                <span class="text-info">{{ l.get_action_display }}</span>
+                            {% elif l.action == '1' %}
+                                <span class="text-danger">{{ l.get_action_display }}</span>
+                            {% else %}
+                                {{ l.get_action_display }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+{% endblock %}
