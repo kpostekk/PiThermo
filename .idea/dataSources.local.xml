@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="dataSourceStorageLocal">
+    <data-source name="db.sqlite3" uuid="725394ef-2949-49cc-aa35-377e92a26ebc">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" family="SQLITE" exact-version="0.0" />
+      <secret-storage>master_key</secret-storage>
+      <auth-required>false</auth-required>
+      <first-sync>true</first-sync>
+    </data-source>
+    <data-source name="@192.168.1.139" uuid="80e55896-9117-4f52-845f-f21b4ce14f30">
+      <database-info product="MySQL" version="10.1.23-MariaDB-9+deb9u1" jdbc-version="4.2" driver-name="MariaDB connector/J" driver-version="2.2.1" family="MARIADB" exact-version="10.1.23">
+        <extra-name-characters>#@</extra-name-characters>
+        <identifier-quote-string>`</identifier-quote-string>
+      </database-info>
+      <case-sensitivity plain-identifiers="exact" quoted-identifiers="exact" />
+      <secret-storage>master_key</secret-storage>
+      <user-name>krystian</user-name>
+      <introspection-schemas>*:django</introspection-schemas>
+    </data-source>
+    <data-source name="Django default" uuid="614b40b2-ca5c-47e1-9f89-84f7ff4d8a92">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" family="MYSQL" exact-version="0.0" />
+      <first-sync>true</first-sync>
+      <user-name>krystian</user-name>
+    </data-source>
+  </component>
+</project>
