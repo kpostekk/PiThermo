@@ -12,7 +12,10 @@ class Settings(models.Model):
 class Logs(models.Model):
     temp = models.FloatField()
     timedate = models.DateTimeField(auto_now_add=True)
-    action = models.CharField(choices=(('0', 'Wyłączono grzejnik'), ('1', 'Włączono grzejnik')), max_length=1)
+    action = models.CharField(choices=(
+        ('0', 'Wyłączono grzejnik'),
+        ('1', 'Włączono grzejnik')
+    ), max_length=1)
 
     class Meta:
         ordering = ['-timedate']

@@ -1,22 +1,42 @@
+import datetime
+import logging
 import threading
 from time import sleep
 
 import w1thermsensor
+import yaml
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, reverse
 from gpiozero.output_devices import LED as Relay
 
 from .forms import TempsForm, TimePeriodForm
 from .models import Settings, Logs, Temps
 
-# Create your views here.
 # Hardware objects
 relay = Relay(5)
 s = w1thermsensor.W1ThermSensor()
 
+# Config objects
+logging.addLevelName(240, "TEMPSLOG")
+logging.basicConfig(filename='temps.csv',
+                    format='%(mytime)s;%(message)s;%(temp)s;%(relay_mode)s;%(th_high)s;%(th_low)s', level=240)
+# logging.log(level=240, msg='Config message', extra={'mytime': 'Date', 'temp': 'Temp.', 'relay_mode': 'Relay', 'th_high': 'High', 'th_low': 'Low'})
+config_file = open('./PieTemp/config.yaml', mode='r')
+config_yaml = yaml.load(config_file)
+wt_delay = config_yaml['temp_checker']
+
+
+# Defining utils and watchdogs
+def update_config():
+    global config_file
+    global config_yaml
+    config_file = open('./PieTemp/config.yaml', mode='w+')
+    config_file.write(yaml.dump(config_yaml, indent=4, default_flow_style=False))
+    config_file = open('./PieTemp/config.yaml', mode='r')
+
 
 def kget_temp():
-    t_high = float(Settings.objects.get(val_key='Temp threshold high').value)
-    t_low = float(Settings.objects.get(val_key='Temp threshold low').value)
+    t_high = float(config_yaml['treshold_high'])
+    t_low = float(config_yaml['treshold_low'])
 
     t = s.get_temperature()
 
@@ -29,31 +49,36 @@ def kget_temp():
         log = Logs(temp=t, action='1')
         log.save()
 
-    lt = Temps(temp=t)
-    lt.save()
-    # print('lap')
-
-    sleep(50)
+    logging.log(level=240, msg='Collected temperature',
+                extra={
+                    'mytime': datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S'),
+                    'temp': t,
+                    'relay_mode': relay.value,
+                    'th_high': t_high,
+                    'th_low': t_low
+                })
 
 
 def watch_temp():
     while True:
         kget_temp()
+        sleep(wt_delay)
 
 
+# Starting watchdogs
 th = threading.Thread(target=watch_temp, name='Watchdog')
 th.start()
 
 
+# Rest of views are here
 def dashboard_view(request):
     logs = Logs.objects.all().order_by('-timedate')[:150]
-    t_high = float(Settings.objects.get(val_key='Temp threshold high').value)
-    t_low = float(Settings.objects.get(val_key='Temp threshold low').value)
+    t_high = float(config_yaml['treshold_high'])
+    t_low = float(config_yaml['treshold_low'])
     return render(request, 'dashboard.html', {'logs': logs, 'temps': {'high': t_high, 'low': t_low}})
 
 
 def raw_temp(request):
-    # temp = randint(2400, 2800) / 100
     temp = s.get_temperature()
 
     response = HttpResponse(content=temp, content_type='text/plain')
@@ -85,15 +110,10 @@ def settings_view(request):
             if form.cleaned_data['t_high'] < form.cleaned_data['t_low']:
                 return HttpResponse('FORM IS NOT VALID!!!', status=400)
             else:
-                st_high = Settings.objects.get(val_key='Temp threshold high')
-                st_low = Settings.objects.get(val_key='Temp threshold low')
+                config_yaml['treshold_high'] = form.cleaned_data['t_high']
+                config_yaml['treshold_low'] = form.cleaned_data['t_low']
 
-                st_high.value = form.cleaned_data['t_high']
-                st_low.value = form.cleaned_data['t_low']
-
-                st_high.save()
-                st_low.save()
-
+                update_config()
                 kget_temp()
 
                 return HttpResponseRedirect(reverse('home'))
@@ -101,8 +121,8 @@ def settings_view(request):
             return HttpResponse('FORM IS NOT VALID!!!', status=400)
     else:
         f = TempsForm(initial={
-            't_low': float(Settings.objects.get(val_key='Temp threshold low').value),
-            't_high': float(Settings.objects.get(val_key='Temp threshold high').value)
+            't_low': config_yaml['treshold_low'],
+            't_high': config_yaml['treshold_high']
         })
         return render(
             request,
@@ -124,3 +144,13 @@ def show_period(request):
             return render(request, 'history.html', {'form': form})
     else:
         return render(request, 'history.html', {'form': TimePeriodForm()})
+
+
+def get_csv_period(request):
+    response = HttpResponse(content_type='application/octet-stream')
+    response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(
+        datetime.datetime.now().strftime('%A-%d-%B-%Y')
+    )
+    with open('temps.csv', mode='r') as rf:
+        response.write(rf.read())
+    return response

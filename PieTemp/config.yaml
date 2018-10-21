@@ -1,0 +1,5 @@
+# Temperatures' thresholds
+treshold_high: 21.5
+treshold_low: 20.0
+# Watchdogs' delays
+temp_checker: 50
