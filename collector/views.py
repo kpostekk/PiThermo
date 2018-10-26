@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import threading
 from time import sleep
@@ -16,7 +17,6 @@ relay = Relay(5)
 s = w1thermsensor.W1ThermSensor()
 
 # Config objects
-logging.addLevelName(240, "TEMPSLOG")
 logging.basicConfig(filename='temps.csv',
                     format='%(mytime)s;%(message)s;%(temp)s;%(relay_mode)s;%(th_high)s;%(th_low)s', level=240)
 # logging.log(level=240, msg='Config message', extra={'mytime': 'Date', 'temp': 'Temp.', 'relay_mode': 'Relay', 'th_high': 'High', 'th_low': 'Low'})
@@ -98,6 +98,19 @@ def get_relay_status(request):
     return HttpResponse(content=relay.value, content_type='text/plain')
 
 
+def jsonify_statuses(request):
+    temp = s.get_temperature()
+    rv = relay.value
+    return HttpResponse(
+        content=json.dumps(
+            {
+                'Temperature': temp,
+                'Relay switch mode': rv
+            }, indent=2
+        )
+    )
+
+
 def switch_relay(request):
     relay.toggle()
     return HttpResponse(content='Done', content_type='text/plain', status=201)
@@ -138,7 +151,8 @@ def show_period(request):
         form = TimePeriodForm(request.POST)
         if form.is_valid():
             temps = Temps.objects.filter(
-                timedate__range=(form.cleaned_data['since'], form.cleaned_data['to'])).order_by('-timedate')
+                timedate__range=(form.cleaned_data['since'], form.cleaned_data['to'])
+            ).order_by('-timedate')
             return render(request, 'history.html', {'form': form, 'temps': temps})
         else:
             return render(request, 'history.html', {'form': form})
@@ -154,3 +168,9 @@ def get_csv_period(request):
     with open('temps.csv', mode='r') as rf:
         response.write(rf.read())
     return response
+
+def clear_switch_log(request):
+    log = Logs.objects.all()
+    k = log.__len__()
+    log.delete()
+    return HttpResponse(content='Usunięto {} wpisów'.format(k), status=201)

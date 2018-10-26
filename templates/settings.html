@@ -2,6 +2,7 @@
 {% block content %}
     <div class="row justify-content-center">
         <div class="col-lg-7">
+            <h1>Ustawienia temperatur</h1>
             <form method="post" novalidate>
                 {% csrf_token %}
                 <table class="table table-borderless">
@@ -20,4 +21,29 @@
             </form>
         </div>
     </div>
+    <div class="row justify-content-center" style="margin-top: 40px">
+        <div class="col-lg-7">
+            <h1>Czynności konserwacyjne</h1>
+            <button id="clearlogs" type="button" class="btn btn-primary">Wyczyść log przełączania grzejnika</button>
+        </div>
+    </div>
+{% endblock %}
+{% block special-libs %}
+    <script>
+        $(document).ready(
+            function () {
+                $('#clearlogs').click(function () {
+                    requestClearingLogs()
+                })
+            }
+        );
+        function requestClearingLogs() {
+            $.ajax({
+                url: '/m/clear-log',
+                success: function (status_text) {
+                    alert(status_text)
+                }
+            })
+        }
+    </script>
 {% endblock %}

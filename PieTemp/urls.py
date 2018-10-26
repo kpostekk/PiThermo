@@ -24,5 +24,7 @@ urlpatterns = [
     path('r/set-mode/<int:mode>/', co_views.set_relay, name='set relay'),
     path('r/get-mode/', co_views.get_relay_status, name='get relay'),
     path('r/toggle/', co_views.switch_relay, name='toggle relay'),
-    path('history/', co_views.get_csv_period, name='history')
+    path('history/', co_views.get_csv_period, name='history'),
+    path('json/', co_views.jsonify_statuses, name='json'),
+    path('m/clear-log/', co_views.clear_switch_log)
 ]

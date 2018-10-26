@@ -1,34 +1,30 @@
 $(document).ready(function () {
-    collectTemp();
-    collectState();
-    window.setInterval(collectTemp, 6000);
-    window.setInterval(collectState, 20000);
+    collectVars();
+    window.setInterval(collectVars, 6000);
 });
 
-function collectTemp() {
-    return $.ajax('/temperature/', {
-        success: function (payload) {
-            $('#temp').text(payload + "°C")
-        }
+function collectVars() {
+    return $.getJSON('/json', function (payload) {
+        console.log(payload);
+        reloadTargets(payload)
     })
 }
 
-function collectState() {
-    return $.ajax('/r/get-mode/', {
-        success: function (payload) {
-            if (payload === 'False') {
-                $('#state').removeClass('badge-danger').addClass('badge-info')
-            } else {
-                $('#state').addClass('badge-danger').removeClass('badge-info')
-            }
+function reloadTargets(payload_json) {
+    $('#temp').text((payload_json['Temperature'] + '°C').toString().replace('.', ','));
+    if (payload_json['Relay switch mode'] === false) {
+        $('#state').removeClass('badge-danger').addClass('badge-info')
+    } else {
+        $('#state').addClass('badge-danger').removeClass('badge-info')
+    }
 
-            if (payload === 'True') {
-                payload = 'Włączony'
-            } else if (payload === 'False') {
-                payload = 'Wyłączony'
-            }
+    if (payload_json['Relay switch mode'] === true) {
+        msg = 'Włączony'
+    } else if (payload_json['Relay switch mode'] === false) {
+        msg = 'Wyłączony'
+    } else {
+        msg = 'Err'
+    }
 
-            $('#state').text(payload);
-        }
-    })
+    $('#state').text(msg)
 }
